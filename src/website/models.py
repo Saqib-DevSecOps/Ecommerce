@@ -3,6 +3,8 @@ from django.db import models
 
 
 # Create your models here.
+from src.accounts.models import User
+
 
 class Category(models.Model):
     title = models.CharField(max_length=200)
@@ -31,11 +33,11 @@ class Product(models.Model):
 
 
 class Cart(models.Model):
-    cart_id = models.CharField(max_length=100)
+    user = models.ForeignKey(User,on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.cart_id
+        return self.user.username
 
 
 class CartItem(models.Model):
@@ -45,4 +47,4 @@ class CartItem(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.product.name
+        return self.product.title
