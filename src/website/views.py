@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import render, redirect
 
 # Create your views here.
@@ -53,6 +54,12 @@ class StoreDetailView(DetailView):
     template_name = 'website/store_detail.html'
     context_object_name = 'product'
 
+    def get_context_data(self, **kwargs):
+        context = super(StoreDetailView, self).get_context_data(**kwargs)
+        pk = self.kwargs['pk']
+        context['in_cart'] = CartItem.objects.filter(product_id=pk, cart_id=self.request.user.id).exists()
+        return context
+
 
 class AddToCart(View):
     def get(self, request, pk):
@@ -101,10 +108,10 @@ class AddToCartListView(ListView):
 
 
 class RemoveCart(View):
-    def get(self, request,pk):
-        cart = Cart.objects.get(user = self.request.user)
+    def get(self, request, pk):
+        cart = Cart.objects.get(user=self.request.user)
         product = Product.objects.get(id=pk)
-        cart_item = CartItem.objects.get(cart=cart,product=product)
+        cart_item = CartItem.objects.get(cart=cart, product=product)
         if cart_item.quantity > 1:
             cart_item.quantity -= 1
             cart_item.save()
@@ -112,10 +119,14 @@ class RemoveCart(View):
             cart_item.delete()
         return redirect('website:cart')
 
+
 class CartDelete(View):
-    def get(self,request,pk):
+    def get(self, request, pk):
         cart = Cart.objects.get(user=self.request.user)
         product = Product.objects.get(id=pk)
         cart_item = CartItem.objects.get(cart=cart, product=product)
         cart_item.delete()
         return redirect('website:cart')
+
+
+

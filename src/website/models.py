@@ -1,7 +1,6 @@
 from ckeditor.fields import RichTextField
 from django.db import models
 
-
 # Create your models here.
 from src.accounts.models import User
 
@@ -32,8 +31,16 @@ class Product(models.Model):
         return self.title
 
 
+class VariationManager(models.Manager):
+    def color(self):
+        return super(VariationManager, self).filter(variation_type='color')
+
+    def size(self):
+        return super(VariationManager, self).filter(variation_type='size')
+
+
 class Cart(models.Model):
-    user = models.ForeignKey(User,on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -41,8 +48,8 @@ class Cart(models.Model):
 
 
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE,related_name='cart')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name='product')
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product')
     quantity = models.IntegerField()
     is_active = models.BooleanField(default=True)
 
