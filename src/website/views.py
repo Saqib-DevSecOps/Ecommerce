@@ -1,12 +1,17 @@
+import random
+
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.db.models.functions import math
 from django.shortcuts import render, redirect
-
+from .bll import amount_calcultaion
 # Create your views here.
 from django.views.generic import TemplateView, ListView, DetailView, DeleteView
 from django.views.generic.base import View
 
-from src.website.models import Product, Category, Cart, CartItem
+from src.website.forms import OrderForm
+from src.website.models import Product, Category, Cart, CartItem, Order
 
 
 class HomeTemplateView(TemplateView):
@@ -91,19 +96,11 @@ class AddToCartListView(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(AddToCartListView, self).get_context_data(**kwargs)
-        total = 0
-        cart_items = 0
-
-        cart_item = CartItem.objects.filter(cart__user=self.request.user)
-        for cart in cart_item:
-            total += cart.quantity * cart.product.price
-            cart_items += cart.quantity
-        tax = (2 * total) / 100
-        total_amount = tax + total
+        tax, total, total_amount, cart = amount_calcultaion(self.request)
         context['tax'] = tax
         context['total'] = total
         context['total_amount'] = total_amount
-        context['cart'] = cart_item
+        context['cart'] = cart
         return context
 
 
@@ -129,4 +126,56 @@ class CartDelete(View):
         return redirect('website:cart')
 
 
+class CheckOut(View):
+    def get(self, request):
+        form = OrderForm()
+        tax, total, total_amount, cart_item = amount_calcultaion(self.request)
+        context = {
+            'total': total, 'total_amount': total_amount, 'cart_item': cart_item, 'tax': tax,
+            'form': form
+        }
+        return render(self.request, 'website/checkout.html', context)
 
+    def post(self, request):
+        cart_item = CartItem.objects.filter(cart__user=self.request.user)
+        if cart_item.count() <= 0:
+            messages.error(request, 'Select Product to Purchase')
+            return redirect('website:store')
+        tax, total, total_amount, cart_item = amount_calcultaion(self.request)
+        order_number = random.randint(0, 999999999999)
+        form = OrderForm(request.POST)
+        if form.is_valid():
+            data = Order()
+            data.first_name = form.cleaned_data['first_name']
+            data.last_name = form.cleaned_data['last_name']
+            data.phone = form.cleaned_data['phone']
+            data.email = form.cleaned_data['email']
+            data.address_line_1 = form.cleaned_data['address_line_1']
+            data.address_line_2 = form.cleaned_data['address_line_2']
+            data.country = form.cleaned_data['country']
+            data.state = form.cleaned_data['state']
+            data.city = form.cleaned_data['city']
+            data.ip = self.request.META.get('REMOTE_ADDR')
+            data.order_note = form.cleaned_data['order_note']
+            data.user = self.request.user
+            data.product_tax = tax
+            data.order_number = order_number
+            data.order_total = total_amount
+            data.save()
+            order = Order.objects.get(user=self.request.user,is_ordered=False,order_number=order_number)
+            context = {
+                'order':order,
+                'total':total,
+                'tax' : tax,
+                'total_amount':total_amount,
+                'cart_item':cart_item
+            }
+            return render(self.request, 'website/payment.html',context)
+        return redirect('website:checkout')
+
+
+class Payment(View):
+    def get(self, request):
+        order_item = Order.objects.filter(user=self.request.user, is_ordered=False)
+        context = {'order_item': order_item}
+        return render(self.request, 'website/payment.html', context)

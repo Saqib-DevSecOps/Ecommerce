@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'src.accounts',
+    'django_countries',
     'src.website',
       # Django packages
 

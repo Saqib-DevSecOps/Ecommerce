@@ -1,0 +1,85 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load countries %}
+{% load crispy_forms_tags %}
+{% get_countries as countries %}
+{% block content %}
+<div class="row">
+    <main class="col-md-8">
+
+        <article class="card mb-4">
+            <div class="card-body">
+                <article class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title text-center mb-2">Billing Address</h4>
+                        <p><b>Full Name     </b>:   {{order.full_name}}</p>
+                        <p><b>Address       </b>:   {{order.full_address}}</p>
+                        <p><b>Region      </b>  :   {{order.country}},{{order.state}},{{order.city}}</p>
+                        <p><b>Order Id      </b>:   {{order.order_number}}</p>
+
+                    </div> <!-- card-body.// -->
+                </article> <!-- card.// -->
+                <article class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Payment Method</h4>
+                    </div> <!-- card-body.// -->
+                </article> <!-- card.// -->
+                <article class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Review Product</h4>
+                         {% for cart in cart_item %}
+                        <div class="col-md-12">
+                            <figure class="itemside  mb-4">
+                                <div class="col-md-3">
+                                    <div class="aside"><img src="{{cart.product.image.url}}" class="border img-sm"></div>
+                                <figcaption class="info">
+                                    <p>{{ cart.product.title}}</p>
+                                </figcaption>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    Quantity
+                                    <div>
+                                        {{cart.quantity}}
+                                    </div>
+                                </div> <div class="col-md-3 text-center">
+                                    Price
+                                    <div>
+                                        {{cart.quantity}}*{{cart.product.price}}   =   {% widthratio cart.quantity 1 cart.product.price %}
+                                    </div>
+                                </div>
+                            </figure>
+                            {% endfor %}
+                    </div> <!-- card-body.// -->
+                </article> <!-- card.// -->
+
+        </article>
+    </main> <!-- col.// -->
+
+    <aside class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <dl class="dlist-align">
+                    <dt>Total price:</dt>
+                    <dd class="text-right">${{total}}</dd>
+                </dl>
+                <dl class="dlist-align">
+                    <dt>Tax:</dt>
+                    <dd class="text-right"> ${{tax}}</dd>
+                </dl>
+                <dl class="dlist-align">
+                    <dt>Total:</dt>
+                    <dd class="text-right text-dark b"><strong>${{total_amount}}</strong></dd>
+                </dl>
+                <hr>
+                <p class="text-center mb-3">
+                    <img src="{% static './images/misc/payments.png' %}" height="26">
+                </p>
+                <button type="submit" class="btn btn-primary btn-block"> Make Payment</button>
+                </form>
+            </div> <!-- card-body.// -->
+        </div> <!-- card.// -->
+
+    </aside> <!-- col.// -->
+</div> <!-- row.// -->
+<!-- accordion end.// -->
+{% endblock content %}
