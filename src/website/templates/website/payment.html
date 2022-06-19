@@ -4,6 +4,7 @@
 {% load crispy_forms_tags %}
 {% get_countries as countries %}
 {% block content %}
+<script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD&intent=capture&enable-funding=venmo"></script>
 <div class="row">
     <main class="col-md-8">
 
@@ -12,10 +13,10 @@
                 <article class="card mb-4">
                     <div class="card-body">
                         <h4 class="card-title text-center mb-2">Billing Address</h4>
-                        <p><b>Full Name     </b>:   {{order.full_name}}</p>
-                        <p><b>Address       </b>:   {{order.full_address}}</p>
-                        <p><b>Region      </b>  :   {{order.country}},{{order.state}},{{order.city}}</p>
-                        <p><b>Order Id      </b>:   {{order.order_number}}</p>
+                        <p><b>Full Name </b>: {{order.full_name}}</p>
+                        <p><b>Address </b>: {{order.full_address}}</p>
+                        <p><b>Region </b> : {{order.country}},{{order.state}},{{order.city}}</p>
+                        <p><b>Order Id </b>: {{order.order_number}}</p>
 
                     </div> <!-- card-body.// -->
                 </article> <!-- card.// -->
@@ -27,29 +28,32 @@
                 <article class="card mb-4">
                     <div class="card-body">
                         <h4 class="card-title mb-4">Review Product</h4>
-                         {% for cart in cart_item %}
+                        {% for cart in cart_item %}
                         <div class="col-md-12">
                             <figure class="itemside  mb-4">
                                 <div class="col-md-3">
-                                    <div class="aside"><img src="{{cart.product.image.url}}" class="border img-sm"></div>
-                                <figcaption class="info">
-                                    <p>{{ cart.product.title}}</p>
-                                </figcaption>
+                                    <div class="aside"><img src="{{cart.product.image.url}}" class="border img-sm">
+                                    </div>
+                                    <figcaption class="info">
+                                        <p>{{ cart.product.title}}</p>
+                                    </figcaption>
                                 </div>
                                 <div class="col-md-3 text-center">
                                     Quantity
                                     <div>
                                         {{cart.quantity}}
                                     </div>
-                                </div> <div class="col-md-3 text-center">
+                                </div>
+                                <div class="col-md-3 text-center">
                                     Price
                                     <div>
-                                        {{cart.quantity}}*{{cart.product.price}}   =   {% widthratio cart.quantity 1 cart.product.price %}
+                                        {{cart.quantity}}*{{cart.product.price}} = {% widthratio cart.quantity 1
+                                        cart.product.price %}
                                     </div>
                                 </div>
                             </figure>
                             {% endfor %}
-                    </div> <!-- card-body.// -->
+                        </div> <!-- card-body.// -->
                 </article> <!-- card.// -->
 
         </article>
@@ -74,8 +78,17 @@
                 <p class="text-center mb-3">
                     <img src="{% static './images/misc/payments.png' %}" height="26">
                 </p>
-                <button type="submit" class="btn btn-primary btn-block"> Make Payment</button>
-                </form>
+                <form id="payment-form" method="post" action="{% url 'website:payment' %}">
+                    {% csrf_token %}
+                    <div id="payment-element">
+                        <!--Stripe.js injects the Payment Element-->
+                    </div>
+                    <button id="submit">
+                        <div class="spinner hidden" id="spinner"></div>
+                        <span id="button-text">Pay now</span>
+                    </button>
+                    <div id="payment-message" class="hidden"></div>
+                    <!-- Sample PayPal credentials (client-id) are included -->
             </div> <!-- card-body.// -->
         </div> <!-- card.// -->
 

@@ -1,10 +1,14 @@
 import random
 
+import stripe
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.db.models.functions import math
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
+
 from .bll import amount_calcultaion
 # Create your views here.
 from django.views.generic import TemplateView, ListView, DetailView, DeleteView
@@ -142,6 +146,7 @@ class CheckOut(View):
             messages.error(request, 'Select Product to Purchase')
             return redirect('website:store')
         tax, total, total_amount, cart_item = amount_calcultaion(self.request)
+        order = Order.objects.filter(user=self.request.user, is_ordered=False)
         order_number = random.randint(0, 999999999999)
         form = OrderForm(request.POST)
         if form.is_valid():
@@ -162,20 +167,51 @@ class CheckOut(View):
             data.order_number = order_number
             data.order_total = total_amount
             data.save()
-            order = Order.objects.get(user=self.request.user,is_ordered=False,order_number=order_number)
+            order = Order.objects.get(user=self.request.user, is_ordered=False, order_number=order_number)
             context = {
-                'order':order,
-                'total':total,
-                'tax' : tax,
-                'total_amount':total_amount,
-                'cart_item':cart_item
+                'order': order,
+                'total': total,
+                'tax': tax,
+                'total_amount': total_amount,
+                'cart_item': cart_item
             }
-            return render(self.request, 'website/payment.html',context)
+            return render(self.request, 'website/payment.html', context)
         return redirect('website:checkout')
 
 
-class Payment(View):
-    def get(self, request):
-        order_item = Order.objects.filter(user=self.request.user, is_ordered=False)
-        context = {'order_item': order_item}
-        return render(self.request, 'website/payment.html', context)
+class CreateCheckoutSessionView(View):
+
+    def post(self, request, *args, **kwargs):
+        stripe.api_key = 'sk_test_51LC794Js59MkLRK8jKm97MecFP4dwcOrxfetIXefvByCaodNGQ1qNdKqaxVBZGD1aW9VTBh69W73T1Ox7LtByRpy00nRXonBff '
+        host = self.request.get_host()
+        tax, total, total_amount, cart_item = amount_calcultaion(self.request)
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            customer_email=self.request.user.email,
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'unit_amount': int(total_amount * 100),
+                        'product_data': {
+                            'name': 'Purchase Product'
+
+                        },
+                    },
+                    'quantity': 2,
+                },
+            ],
+
+        mode='payment',
+            success_url='http://{}{}'.format(host, reverse('website:success')),
+            cancel_url='http://{}{}'.format(host, reverse('website:cancel')),
+        )
+        return redirect(checkout_session.url, code=303)
+
+
+class SuccessPayment(TemplateView):
+    template_name = 'website/success.html'
+
+
+class CancelPayment(TemplateView):
+    template_name = 'website/cancel.html'

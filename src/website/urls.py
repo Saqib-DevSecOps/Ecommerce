@@ -22,5 +22,7 @@ urlpatterns = [
     # Checkout and Payment
 
     path('checkout/', views.CheckOut.as_view(), name="checkout"),
-    path('payment/', views.Payment.as_view(), name='payment'),
+    path('payment/', views.CreateCheckoutSessionView.as_view(), name="payment"),
+    path('payment-success/', views.SuccessPayment.as_view(), name="success"),
+    path('payment-cancelled/', views.CancelPayment.as_view(), name="cancel"),
 ]
