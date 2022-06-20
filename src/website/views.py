@@ -182,30 +182,41 @@ class CheckOut(View):
 class CreateCheckoutSessionView(View):
 
     def post(self, request, *args, **kwargs):
+        tax, total, total_amount, cart_item = amount_calcultaion(self.request)
         stripe.api_key = 'sk_test_51LC794Js59MkLRK8jKm97MecFP4dwcOrxfetIXefvByCaodNGQ1qNdKqaxVBZGD1aW9VTBh69W73T1Ox7LtByRpy00nRXonBff '
         host = self.request.get_host()
         tax, total, total_amount, cart_item = amount_calcultaion(self.request)
+        customer = stripe.Customer.create(
+            email=self.request.user.email,
+            name=self.request.user.username,
+        )
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
-            customer_email=self.request.user.email,
+            customer = customer,
+            submit_type='pay',
             line_items=[
                 {
                     'price_data': {
                         'currency': 'usd',
                         'unit_amount': int(total_amount * 100),
                         'product_data': {
-                            'name': 'Purchase Product'
+                            'name': 'Click on Pay to Buy your Products'
 
                         },
                     },
-                    'quantity': 2,
+
+                    'quantity': 1,
                 },
+
             ],
 
-        mode='payment',
-            success_url='http://{}{}'.format(host, reverse('website:success')),
-            cancel_url='http://{}{}'.format(host, reverse('website:cancel')),
+            mode='payment',
+            success_url='http://{}{}'.format(host,
+                                             reverse('website:success')),
+            cancel_url='http://{}{}'.format(host, reverse(
+                'website:cancel')),
         )
+        print(checkout_session)
         return redirect(checkout_session.url, code=303)
 
 
